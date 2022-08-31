@@ -1,5 +1,5 @@
-import { getBestServerToHack } from "/servers";
-import { searchServers } from "/scan";
+import { getBestServerToHack } from "servers";
+import { searchServers } from "scan";
 import { NS } from "@ns";
 
 

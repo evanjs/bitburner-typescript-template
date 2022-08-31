@@ -1,4 +1,4 @@
-import { searchServers } from "/scan";
+import { searchServers } from "scan";
 import { Server, NS } from '@ns';
 
 let targetServer: Server;

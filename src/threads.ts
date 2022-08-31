@@ -1,4 +1,4 @@
-import { EARLY_HACK_SCRIPT } from "/constants";
+import { EARLY_HACK_SCRIPT } from "constants";
 import { Server, NS } from '@ns';
 
 /**

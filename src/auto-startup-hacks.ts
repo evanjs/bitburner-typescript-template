@@ -1,8 +1,8 @@
-import { searchServers } from "/scan";
-import { getThreads, getHomeThreads } from "/threads";
-import { getBestServerToHack } from "/servers";
+import { searchServers } from "scan";
+import { getThreads, getHomeThreads } from "threads";
+import { getBestServerToHack } from "servers";
 import { NS, Server } from "@ns";
-import { EARLY_HACK_SCRIPT } from "/constants";
+import { EARLY_HACK_SCRIPT } from "constants";
 
 let targetServer: Server;
 

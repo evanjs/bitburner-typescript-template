@@ -1,7 +1,6 @@
 import { NS } from "@ns";
-import { getThreads } from "/threads";
-// import { EARLY_HACK_SCRIPT } from "./auto-startup-hacks";
-const EARLY_HACK_SCRIPT = "early-hack-template.js";
+import { getThreads } from "threads";
+import { EARLY_HACK_SCRIPT } from "constants";
 
 const targetServer = "joesguns";
 

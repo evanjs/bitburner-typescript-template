@@ -1,7 +1,6 @@
 import { NS } from "@ns";
 
 // const cities = [ 'Aevum', 'Neo Tokyo', 'Volhaven', 'Ishima', 'Chongqing' ]
-let cities = [];
 let division = null;
 let products = [];
 
@@ -53,10 +52,6 @@ export async function main(ns: NS): Promise<void> {
 			ns.tprint(`Sales for ${productName} in ${city} (${division.type}) match production. Incrementing price by ${step}...`);
 			newPrice = adjustProductPrice(ns, productPrice, '+', step);
 		}
-		//  else if (cityData[1] < cityData[2]) {
-		// 	ns.tprint(`Sales for ${productName} in ${city} (${division.type}) exceeds sales. Incrementing by ${step}...`);
-		// 	newPrice = adjustProductPrice(ns, productPrice, '-', step);
-		// }
 
 		if (newPrice) {
 			ns.corporation.sellProduct(division.name, city, productName, 'MAX', newPrice, true);
