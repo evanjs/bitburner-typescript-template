@@ -1,5 +1,5 @@
-import { WaitPids, RunScript } from 'prep.js';
-import { MemoryMap } from 'ram.js';
+import { WaitPids, RunScript } from "xxxsinx/prep.js";
+import { MemoryMap } from "xxxsinx/ram.js";
 
 /** @param {NS} ns **/
 export async function main(ns) {

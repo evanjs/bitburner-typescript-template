@@ -1,10 +1,10 @@
-import { PrintTable, DefaultStyle, ColorPrint } from 'tables.js'
+import { PrintTable, DefaultStyle, ColorPrint } from "xxxsinx/tables.js"
 
 /** @param {NS} ns */
 export async function main(ns) {
+	ns.disableLog('ALL');
+
 	const [hackingOnly = true] = ns.args;
-
-
 
 	let servers = GetAllServers(ns);
 	if (hackingOnly) {
@@ -79,14 +79,16 @@ export async function main(ns) {
 		cso.hackDifficulty = cso.minDifficulty;
 		let player = ns.getPlayer();
 		let prepped = so.hackDifficulty == so.minDifficulty && so.moneyAvailable == so.moneyMax && so.moneyMax > 0;
-		
-		let chance = ns.fileExists('Formulas.exe') ? ns.formulas.hacking.hackChance(cso, player) : ns.hackAnalyzeChance(cso.hostname);
-		let weakTime= ns.fileExists('Formulas.exe') ? ns.formulas.hacking.weakenTime(cso, player) : ns.getWeakenTime(cso.hostname); 
+
+		ns.print(cso);
+
+		let chance = GetHackChance(ns, cso, player);
+		let weakTime = GetWeakenTime(ns, cso, player);
 
 		let hackReqColor = 'lime';
-		if (so.requiredHackingSkill <= player.hacking / 2)
+		if (so.requiredHackingSkill <= player.skills.hacking / 2)
 			hackReqColor = 'lime';
-		else if (so.requiredHackingSkill < player.hacking / 2)
+		else if (so.requiredHackingSkill < player.skills.hacking / 2)
 			hackReqColor = 'orange';
 		else
 			hackReqColor = 'red';
@@ -108,6 +110,20 @@ export async function main(ns) {
 	}
 
 	PrintTable(ns, data, columns, DefaultStyle(), ColorPrint);
+}
+
+function GetHackChance(ns, serverObject, player) {
+	if (serverObject.hostname.startsWith('hacknet-node')) return 0;
+	if (ns.fileExists('Formulas.exe'))
+		return ns.formulas.hacking.hackChance(serverObject, player);
+	return ns.hackAnalyzeChance(serverObject.hostname);
+}
+
+function GetWeakenTime(ns, serverObject, player) {
+	if (serverObject.hostname.startsWith('hacknet-node')) return 0;
+	if (ns.fileExists('Formulas.exe'))
+		return ns.formulas.hacking.weakenTime(serverObject, player);
+	return ns.getWeakenTime(serverObject.hostname);
 }
 
 function formatTime(time) {

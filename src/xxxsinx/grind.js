@@ -1,4 +1,4 @@
-import { WaitPids } from 'prep.js';
+import { WaitPids } from "xxxsinx/prep.js";
 
 const factions = [
 	'CyberSec',

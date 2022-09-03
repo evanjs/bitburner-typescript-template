@@ -1,4 +1,4 @@
-import { GetAllServers } from "utils.js";
+import { GetAllServers } from "xxxsinx/utils.js";
 
 let blacklist = [];
 
@@ -127,9 +127,19 @@ async function solve(type, data, server, contract, ns) {
 			solution = comprLZEncode(data);
 			break;
 		case "Compression I: RLE Compression":
-			ns.tprint('INFO: data=', data);
-			ns.tprint('WARN: ATTEMPT for ' + type + ' : ' + RLEencode(data));
-			solution= RLEencode(data);
+			//ns.tprint('INFO: data=', data);
+			//ns.tprint('WARN: ATTEMPT for ' + type + ' : ' + RLEencode(data));
+			solution = RLEencode(data);
+			break;
+		case "Encryption I: Caesar Cipher":
+			// ns.tprint('INFO: data=', data);
+			// ns.tprint('WARN: ATTEMPT for ' + type + ' : ' + caesarCipher(data));
+			solution = caesarCipher(data);
+			break;
+		case "Encryption II: Vigenère Cipher":
+			// ns.tprint('INFO: data=', data);
+			// ns.tprint('WARN: ATTEMPT for ' + type + ' : ' + vignereCipher(data));
+			solution = vignereCipher(data);
 			break;
 	}
 	if (solution == 'none')
@@ -150,6 +160,23 @@ async function solve(type, data, server, contract, ns) {
 	}
 }
 
+function vignereCipher(data) {
+	const cipher = [...data[0]]
+		.map((a, i) => {
+			return a === " "
+				? a
+				: String.fromCharCode(((a.charCodeAt(0) - 2 * 65 + data[1].charCodeAt(i % data[1].length)) % 26) + 65);
+		})
+		.join("");
+	return cipher;
+}
+
+function caesarCipher(data) {
+	const cipher = [...data[0]]
+		.map((a) => (a === " " ? a : String.fromCharCode(((a.charCodeAt(0) - 65 - data[1] + 26) % 26) + 65)))
+		.join("");
+	return cipher;
+}
 
 function solverArrayJumpingGameII(arrayData) {
 	let n = arrayData.length;
@@ -938,29 +965,29 @@ export function comprLZEncode(plain) {
 }
 
 function RLEencode(data) {
-	let chars= Array.from(data);
-	let answer= '';
-	let current= undefined;
-	let count= 0;
+	let chars = Array.from(data);
+	let answer = '';
+	let current = undefined;
+	let count = 0;
 	while (chars.length > 0) {
-		let char= chars.shift();
+		let char = chars.shift();
 		switch (current) {
 			case undefined:
-				current= char;
-				count= 1;
+				current = char;
+				count = 1;
 				break;
 			case char:
 				if (count == 9) {
-					answer = `${answer}${count}${current}`;	
-					count= 0;
+					answer = `${answer}${count}${current}`;
+					count = 0;
 				}
-				count++;				
+				count++;
 				break;
 			default:
 				answer = `${answer}${count}${current}`;
-				current= char;
-				count= 1;
-				break;				
+				current = char;
+				count = 1;
+				break;
 		}
 	}
 	answer = `${answer}${count}${current}`;

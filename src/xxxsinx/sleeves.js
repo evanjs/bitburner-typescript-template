@@ -1,5 +1,5 @@
-import { GetBestCrime } from 'stats.js'
-import { ColorPrint } from 'hack-once.js'
+import { GetBestCrime } from "xxxsinx/stats.js"
+import { ColorPrint } from "xxxsinx/hack-once.js"
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -82,13 +82,13 @@ export async function main(ns) {
 
 		if (task == 'study') {
 			// Travel if possible/needed
-			if (ns.sleeve.getInformation(i).city != 'Volhaven' && cash > 1_000_000) {
+			if (ns.sleeve.getInformation(i).city != 'Volhaven' && cash > 1_000_000_000) {
 				ns.sleeve.travel(i, 'Volhaven');
 				city = ns.sleeve.getInformation(i).city;
 			}
 
 			// Chose either the most expensive or free course depending on cash
-			const course = cash > 1_000_000 ? 'Algorithms' : 'Study Computer Science';
+			const course = cash > 1_000_000_000 ? 'Algorithms' : 'Study Computer Science';
 			let uni = '';
 
 			switch (city) {

@@ -1,4 +1,4 @@
-import { MemoryMap } from "ram.js";
+import { MemoryMap } from "xxxsinx/ram.js";
 
 export function BatchSpacer() {
 	return 30;
@@ -192,7 +192,7 @@ export async function RunScript(ns, scriptName, target, threads, delay, expected
 			// 	ns.print('WARN: ' + scriptName + ' not found on ' + server);
 			// 	ns.print('WARN: Attempting to copy ' + scriptName + ' to ' + server);
 
-			await ns.scp(scriptName, server);
+			await ns.scp(scriptName, server, "home");
 
 			// 	if (!ns.fileExists(scriptName, server)) {
 			// 		ns.print('FAIL: Could not copy ' + scriptName + ' to ' + server + ', aborting.');

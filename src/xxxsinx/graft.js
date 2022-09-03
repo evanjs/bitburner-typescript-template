@@ -1,4 +1,4 @@
-import { PrintTable, DefaultStyle, ColorPrint } from 'tables.js'
+import { PrintTable, DefaultStyle, ColorPrint } from "xxxsinx/tables.js"
 
 /** @param {NS} ns */
 export async function main(ns) {

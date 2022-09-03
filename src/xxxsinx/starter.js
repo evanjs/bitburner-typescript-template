@@ -1,4 +1,4 @@
-import { ServerReport, Weaken, Grow, Hack } from "prep.js";
+import { ServerReport, Weaken, Grow, Hack } from "xxxsinx/prep.js";
 
 // ns.args[0] = target server name
 // ns.args[1] = hack percent factor (0.1 to 1)

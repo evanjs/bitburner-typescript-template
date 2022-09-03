@@ -1,4 +1,4 @@
-import { GetAllServers } from "utils.js";
+import { GetAllServers } from "xxxsinx/utils.js";
 
 let MAX_SERVERS = 25;
 

@@ -1,17 +1,19 @@
 //this.hackDifficulty -= amt * BitNodeMultipliers.ServerWeakenRate;
 
-import { BatchSpacer, FormatMoney } from "prep.js";
-import { MemoryMap } from "ram.js";
-import { GetAllServers } from "utils.js";
-import { PrintTable, DefaultStyle, ColorPrint } from 'tables.js'
+import { BatchSpacer, FormatMoney } from "xxxsinx/prep.js";
+import { MemoryMap } from "xxxsinx/ram.js";
+import { GetAllServers } from "xxxsinx/utils.js";
+import { PrintTable, DefaultStyle, ColorPrint } from "xxxsinx/tables.js"
 
 const H = 0;	// Index of HACK data
 const W1 = 1;	// Index of first WEAKEN data
 const G = 2;	// Index of GROW data
 const W2 = 3;	// Index of second WEAKEN data
 
+export let HGW_MODE = false;
+
 const LEECH = [
-	0.01, 0.02, 0.03, 0.04, 0.05, 0.07, 0.10, 0.15, 0.25, 0.45, 0.55, 0.75, 0.85, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.00
+	0.01, 0.02, 0.03, 0.4, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65, 0.7, 0.75, 0.85, 0.90, 0.95
 ];
 
 const EXTRA_THREAD_FACTOR = 1;		// Apply this factor to GROW and WEAKEN thread calculations, not used right now
@@ -19,6 +21,8 @@ const MIN_EXTRA_THREADS = 0;		// Add this many extra threads to GROW and WEAKEN 
 
 /** @param {NS} ns **/
 export async function main(ns) {
+	let start = performance.now();
+
 	if (!ns.fileExists('Formulas.exe')) {
 		ns.tprint('ERROR: Formulas.exe not found, running this command would take years, aborting.');
 		ns.exit();
@@ -26,19 +30,22 @@ export async function main(ns) {
 
 	// args[0] : max total network ram percentage
 	// args[1] : server name to analyze (if empty, do a full server list report)
-	let [server, maxNetworkRamPct = 1] = ns.args;
+	let [server, maxNetworkRamPct = 1, HGW] = ns.args;
+	if (HGW != undefined)
+		HGW_MODE = HGW;
 
+	// This is a test to compare different grow thread calculation methods
 	if (server == 'grow') {
-		for (let server of GetAllServers(ns).filter(s => ns.getServerMaxMoney(s) > 0 && ns.hasRootAccess(s)).sort(s => ns.getServerMaxMoney(s))) {
+		for (let server of GetAllServers(ns).filter(s => ns.getServerMaxMoney(s) > 0 /*&& ns.hasRootAccess(s)*/).sort(s => ns.getServerMaxMoney(s))) {
 			//			try {
 			let so = ns.getServer(server);
-			if (so.minDifficulty > 99) continue;
+			//if (so.minDifficulty > 99) continue;
 			let metrics = new Metrics(ns, server, 1, 30, 1);
 
-			let w= metrics.threads[G];
-			let b= metrics.debugThreadsG;
+			let w = metrics.threads[G];
+			let b = metrics.debugThreadsG;
 
-			let pct= Math.round(b * 100 / w) - 100;
+			let pct = Math.round(b * 100 / w) - 100;
 
 			ns.tprint(server.padEnd(25) + ('formula: ' + metrics.debugThreadsG).padEnd(25) + (' Lambert: ' + metrics.threads[G]).padEnd(25) + ' %: ' + pct.toString().padStart(4));
 			//metrics.Report(ns, ns.tprint);
@@ -54,6 +61,7 @@ export async function main(ns) {
 
 	if (server == undefined) {
 		await AnalyzeAllServers(ns, maxNetworkRamPct);
+		ns.tprint('Executed in ' + Math.ceil(performance.now() - start) + ' milliseconds');
 		return;
 	}
 	else {
@@ -97,7 +105,7 @@ export async function main(ns) {
 			let pctH2 = Math.round(metrics.threads[H] / maxThreads * 100);
 			pctH = pctH2;//(pctH + pctH2) / 2;
 			tableData.push([
-				{ color: bestPct == metrics.pct ? 'lime' : 'white', text: (Math.round((metrics.pct * 100)).toString() + '% ').padStart(server.length + 1) },
+				{ color: bestPct == metrics.pct ? 'lime' : 'white', text: ((metrics.pct * 100).toFixed(2) + '% ').padStart(server.length + 1) },
 				{ color: 'white', text: ns.nFormat(metrics.cashPerSecond, '0.000a').padStart(9) },
 				{ color: 'white', text: ns.nFormat(Math.ceil(metrics.batchRam) * 1000000000, '0.0b').padStart(9) },
 				{ color: 'white', text: (metrics.maxRunnableBatches + '/' + metrics.maxBatches).padStart(11) },
@@ -128,13 +136,14 @@ export async function main(ns) {
 			let pctW = Math.round((metrics.threads[W1] + metrics.threads[W2]) / maxW * 100);
 			let pctW2 = Math.round((metrics.threads[W1] + metrics.threads[W2]) / maxThreads * 100);
 			pctW = pctW2;//(pctW + pctW2) / 2;
+			let weakenThreadsText = HGW_MODE ? metrics.threads[W2].toString() : (metrics.threads[W1] + '/' + metrics.threads[W2]).toString();
 			tableData.push([
 				{ color: 'white', text: '' },
 				{ color: 'white', text: '' },
 				{ color: 'white', text: '' },
 				{ color: 'white', text: '' },
 				{ color: 'yellow', text: metrics.maxRunnableBatches == 0 ? '' : 'B.Ram'.padStart(6) + ' '.padEnd(pctOfMax / 4 + 2, barchar) },
-				{ color: '#4488FF', text: 'W ' + (metrics.threads[W1] + '/' + metrics.threads[W2]).padStart(7) + ' '.padEnd(pctW / 4 + 2, barchar) },
+				{ color: '#4488FF', text: 'W ' + weakenThreadsText.padStart(7) + ' '.padEnd(pctW / 4 + 2, barchar) },
 				{ color: 'white', text: '' },
 				{ color: 'white', text: '' }
 			]);
@@ -144,6 +153,7 @@ export async function main(ns) {
 
 		tableData.pop();
 		PrintTable(ns, tableData, columns, DefaultStyle(), ColorPrint);
+		ns.tprint('Executed in ' + Math.ceil(performance.now() - start) + ' milliseconds');
 	}
 }
 
@@ -247,29 +257,29 @@ export class Metrics {
 	}
 
 	// Experimental code, not working as intended yet
-	Visualize(ns, graphLen) {
-		let prefix = 'W..W';
-		let suffix = 'H.W.G.W.';
+	// Visualize(ns, graphLen) {
+	// 	let prefix = 'W..W';
+	// 	let suffix = 'H.W.G.W.';
 
-		let len = graphLen - prefix.length - suffix.length;
+	// 	let len = graphLen - prefix.length - suffix.length;
 
-		let ret = prefix;
-		for (let i = 0; i < len; i++)
-			ret += '.';
+	// 	let ret = prefix;
+	// 	for (let i = 0; i < len; i++)
+	// 		ret += '.';
 
-		ret += suffix;
+	// 	ret += suffix;
 
-		let nbSlice = this.batchTime / this.spacer;
-		let ratio = nbSlice / graphLen;
+	// 	let nbSlice = this.batchTime / this.spacer;
+	// 	let ratio = nbSlice / graphLen;
 
-		let gPos = Math.round(this.delays[G] / this.spacer / ratio);
-		let hPos = Math.round(this.delays[H] / this.spacer / ratio);
+	// 	let gPos = Math.round(this.delays[G] / this.spacer / ratio);
+	// 	let hPos = Math.round(this.delays[H] / this.spacer / ratio);
 
-		ret = SetCharAt(ret, gPos, 'G');
-		ret = SetCharAt(ret, hPos, 'H');
+	// 	ret = SetCharAt(ret, gPos, 'G');
+	// 	ret = SetCharAt(ret, hPos, 'H');
 
-		return ret;
-	}
+	// 	return ret;
+	// }
 
 	Report(ns, printfunc = ns.print, minimalist = false) {
 		if (minimalist) {
@@ -308,12 +318,21 @@ export class Metrics {
 		printfunc('│ ' + line.padEnd(52) + '│');
 
 		printfunc('├─────────────────────────────────────────────────────┤');
-		printfunc('│ ' + ('HWGW times   : ' + this.times.map(p => Math.ceil(p))).padEnd(52) + '│');
-		printfunc('│ ' + ('HWGW threads : ' + this.threads).padEnd(52) + '│');
+		if (HGW_MODE) {
+			printfunc('│ ' + ('HGW times   : ' + this.times.map(p => Math.ceil(p))).padEnd(52) + '│');
+			printfunc('│ ' + ('HGW threads : ' + this.threads).padEnd(52) + '│');
+			printfunc('│ ' + ('HGW delays  : ' + this.delays).padEnd(52) + '│');
+			printfunc('│ ' + ('HGW ends    : ' + this.ends).padEnd(52) + '│');
+		}
+		else {
+			printfunc('│ ' + ('HWGW times   : ' + this.times.map(p => Math.ceil(p))).padEnd(52) + '│');
+			printfunc('│ ' + ('HWGW threads : ' + this.threads).padEnd(52) + '│');
+			printfunc('│ ' + ('HWGW delays  : ' + this.delays).padEnd(52) + '│');
+			printfunc('│ ' + ('HWGW ends    : ' + this.ends).padEnd(52) + '│');
+		}
+
 		//printfunc('│ ' + ('Lambert G    : ' + this.debugThreadsG).padEnd(52) + '│');
-		printfunc('│ ' + ('HWGW delays  : ' + this.delays).padEnd(52) + '│');
 		//printfunc('│ ' + ('FISH delays  : ' + this.fishDelays).padEnd(52) + '│');
-		printfunc('│ ' + ('HWGW ends    : ' + this.ends).padEnd(52) + '│');
 		//printfunc('│ ' + ('Period       : ' + this.period).padEnd(52) + '│');
 		//printfunc('│ ' + ('Depth        : ' + this.depth).padEnd(52) + '│');
 		//printfunc('│ ' + this.Visualize(ns, 51).padEnd(52) + '│');
@@ -383,7 +402,8 @@ export class Metrics {
 			if (extraThreads < MIN_EXTRA_THREADS) extraThreads = EXTRA_THREAD_FACTOR;
 			this.threads[W1] += extraThreads;
 		}
-		so.hackDifficulty = so.minDifficulty;
+		if (!HGW_MODE)
+			so.hackDifficulty = so.minDifficulty;
 
 		//ns.tprint('calculateGrowThreads on ' + so.hostname + ' cores: ' + this.cores + ' so.moneyAvailable: ' + so.moneyAvailable);
 		if (isNaN(so.moneyAvailable)) {
@@ -392,20 +412,26 @@ export class Metrics {
 			//	this.Report(this.ns, ns.tprint);
 			return;
 		}
-		//this.threads[G] = calculateGrowThreads(ns, so.hostname, player, this.cores, so.moneyAvailable);
+		// if (this.pct < 0.95) {
+		// 	// Figure grow time and threads
+		// 	const growFactor = 1 / (1 - this.effectivePct);
+		// 	this.threads[G] = Math.ceil(Math.log(growFactor) / Math.log(ns.formulas.hacking.growPercent(so, 1, player, this.cores)));
+		// }
+		// else
+		this.threads[G] = calculateGrowThreads(ns, so, player, this.cores, so.moneyAvailable);
 
 		// Figure grow time and threads
-		const growFactor = 1 / (1 - this.effectivePct);
+		const growFactor = 1 / (1 - ((so.moneyMax-0.01)/so.moneyMax));
 		//this.threads[G] = Math.ceil(Math.log(growFactor) / Math.log(ns.formulas.hacking.growPercent(so, 1, player, this.cores)/* / mults.ServerGrowthRate)*/));
 		this.debugThreadsG = Math.ceil(Math.log(growFactor) / Math.log(ns.formulas.hacking.growPercent(so, 1, player, this.cores)/* / mults.ServerGrowthRate)*/));
-		this.debugThreads2 = calculateGrowThreads(ns, this.server, player, 1, so.moneyAvailable);
+		// this.debugThreads2 = calculateGrowThreads(ns, this.server, player, 1, so.moneyAvailable);
 
-		let opts = {
-			moneyAvailable: so.moneyAvailable,
-			hackDifficulty: so.minDifficulty,
-			ServerGrowthRate: ns.getBitNodeMultipliers().ServerGrowthRate
-		};
-		this.threads[G] = calculateGrowThreadsLambert(ns, so.hostname, so.moneyMax - so.moneyAvailable, 1, opts);
+		// let opts = {
+		// 	moneyAvailable: so.moneyAvailable,
+		// 	hackDifficulty: so.minDifficulty,
+		// 	ServerGrowthRate: ns.getBitNodeMultipliers().ServerGrowthRate
+		// };
+		// this.threads[G] = calculateGrowThreadsLambert(ns, so.hostname, so.moneyMax - so.moneyAvailable, 1, opts);
 		//this.debugThreadsG = calculateGrowThreadsLambert(ns, so.hostname, so.moneyMax - so.moneyAvailable, 1, opts);
 
 		// // *** ALTERNATE GROW ***
@@ -452,15 +478,31 @@ export class Metrics {
 		this.threads = this.threads.map(p => Math.ceil(p));
 		this.times = this.times.map(p => Math.ceil(p));
 
-		this.delays[H] = this.times[W1] - this.spacer - this.times[H];
-		this.delays[W1] = 0;
-		this.delays[G] = this.times[W1] + this.spacer - this.times[G];
-		this.delays[W2] = this.spacer * 2;
+		if (HGW_MODE) {
+			this.threads[W1] = 0;
+			this.times[W1] = 0;
 
-		this.ends[H] = this.delays[H] + this.times[H];
-		this.ends[W1] = this.delays[W1] + this.times[W1];
-		this.ends[G] = this.delays[G] + this.times[G];
-		this.ends[W2] = this.delays[W2] + this.times[W2];
+			this.delays[H] = this.times[W2] - this.spacer * 2 - this.times[H];
+			this.delays[W1] = 0;
+			this.delays[G] = this.times[W2] + this.spacer - this.times[G];
+			this.delays[W2] = 0;
+
+			this.ends[H] = this.delays[H] + this.times[H];
+			this.ends[W1] = 0;
+			this.ends[G] = this.delays[G] + this.times[G];
+			this.ends[W2] = this.delays[W2] + this.times[W2];
+		}
+		else {
+			this.delays[H] = this.times[W1] - this.spacer - this.times[H];
+			this.delays[W1] = 0;
+			this.delays[G] = this.times[W1] + this.spacer - this.times[G];
+			this.delays[W2] = this.spacer * 2;
+
+			this.ends[H] = this.delays[H] + this.times[H];
+			this.ends[W1] = this.delays[W1] + this.times[W1];
+			this.ends[G] = this.delays[G] + this.times[G];
+			this.ends[W2] = this.delays[W2] + this.times[W2];
+		}
 
 		// Round delays
 		this.delays = this.delays.map(p => Math.ceil(p))
@@ -473,11 +515,18 @@ export class Metrics {
 		const GROW_RAM = ns.getScriptRam('grow-once.js');
 		const WEAKEN_RAM = ns.getScriptRam('weaken-once.js');
 		this.batchRam = this.threads[G] * GROW_RAM;
-		this.batchRam += (this.threads[W1] + this.threads[W2]) * WEAKEN_RAM;
+		this.batchRam += this.threads[W1] * WEAKEN_RAM;
+		this.batchRam += this.threads[W2] * WEAKEN_RAM;
 		this.batchRam += this.threads[H] * HACK_RAM;
 
 		// Calculate max concurrent batches (very rough arbitrary calculation)
-		this.maxBatches = Math.ceil(Math.floor(this.times[W1] / (this.spacer * 4)));
+		if (HGW_MODE) {
+			this.maxBatches = Math.ceil(Math.floor(this.times[W2] / (this.spacer * 3)));
+			//this.maxBatches = Math.ceil(this.times[W2] / 0.1875);
+			//if (this.maxBatches * 3 > 9500) this.maxBatches = Math.ceil(9500 / 3);
+		}
+		else
+			this.maxBatches = Math.ceil(Math.floor(this.times[W2] / (this.spacer * 4)));
 
 		// Calculate hackChance
 		so.hackDifficulty = so.minDifficulty;
@@ -493,82 +542,79 @@ export class Metrics {
 		const ram = new MemoryMap(ns, true);
 		this.maxNetworkRam = ram.total * this.maxNetworkRamPct;
 
-		let nbBatches = 0;
-		for (let i = 0; i < this.maxBatches; i++) {
-			if (ram.ReserveBlock(this.threads[H] * HACK_RAM) == undefined) break;
-			if (ram.ReserveBlock(this.threads[W1] * WEAKEN_RAM) == undefined) break;
-			if (ram.ReserveBlock(this.threads[G] * GROW_RAM) == undefined) break;
-			if (ram.ReserveBlock(this.threads[W2] * WEAKEN_RAM) == undefined) break;
-			nbBatches++;
-		}
+		// let nbBatches = 0;
+		// for (let i = 0; i < this.maxBatches; i++) {
+		// 	if (ram.ReserveBlock(this.threads[H] * HACK_RAM) == undefined) break;
+		// 	if (!HGW_MODE)
+		// 		if (ram.ReserveBlock(this.threads[W1] * WEAKEN_RAM) == undefined) break;
+		// 	if (ram.ReserveBlock(this.threads[G] * GROW_RAM) == undefined) break;
+		// 	if (ram.ReserveBlock(this.threads[W2] * WEAKEN_RAM) == undefined) break;
+		// 	nbBatches++;
+		// }
 
-		const maxBatchesInRam = nbBatches; //Math.floor(this.maxNetworkRam / this.batchRam);
-		//const maxBatchesInRam = Math.floor(this.maxNetworkRam / this.batchRam);
+		// const maxBatchesInRam = nbBatches; //Math.floor(this.maxNetworkRam / this.batchRam);
+		const maxBatchesInRam = Math.floor(this.maxNetworkRam / this.batchRam);
 
 		this.maxRunnableBatches = Math.min(this.maxBatches, maxBatchesInRam);
 
 		this.cashPerSecond = Math.ceil(this.batchMoney * this.maxRunnableBatches / (this.batchTime / 1000));
 
-		this.DoTheMagic(ns);
+		//this.DoTheMagic(ns);
 	}
 
-	DoTheMagic(ns) {
-		// Figure hack time and threads
-		const so = ns.getServer(this.server);
-		const player = ns.getPlayer();
+	// CalculateStalefishDelays(ns) {
+	// 	// Figure hack time and threads
+	// 	const so = ns.getServer(this.server);
+	// 	const player = ns.getPlayer();
 
-		// Set server to min difficulty, it's the state where all 4 ops start at
-		so.hackDifficulty = so.minDifficulty;
+	// 	// Set server to min difficulty, it's the state where all 4 ops start at
+	// 	so.hackDifficulty = so.minDifficulty;
 
-		// Get the times, those are fixed since we start at X security
-		this.times[H] = ns.formulas.hacking.hackTime(so, player);
-		this.times[W1] = ns.formulas.hacking.weakenTime(so, player);
-		this.times[G] = ns.formulas.hacking.growTime(so, player);
-		this.times[W2] = ns.formulas.hacking.weakenTime(so, player);
+	// 	// Get the times, those are fixed since we start at X security
+	// 	this.times[H] = ns.formulas.hacking.hackTime(so, player);
+	// 	this.times[W1] = ns.formulas.hacking.weakenTime(so, player);
+	// 	this.times[G] = ns.formulas.hacking.growTime(so, player);
+	// 	this.times[W2] = ns.formulas.hacking.weakenTime(so, player);
 
-		this.period = 0;
-		this.depth = 0;
+	// 	this.period = 0;
+	// 	this.depth = 0;
 
-		const kW_max = Math.floor(1 + (this.times[W1] - 4 * BatchSpacer()) / (8 * BatchSpacer()));
-		schedule: for (let kW = kW_max; kW >= 1; --kW) {
-			const t_min_W = (this.times[W1] + 4 * BatchSpacer()) / kW;
-			const t_max_W = (this.times[W1] - 4 * BatchSpacer()) / (kW - 1);
-			const kG_min = Math.ceil(Math.max((kW - 1) * 0.8, 1));
-			const kG_max = Math.floor(1 + kW * 0.8);
-			for (let kG = kG_max; kG >= kG_min; --kG) {
-				const t_min_G = (this.times[G] + 3 * BatchSpacer()) / kG
-				const t_max_G = (this.times[G] - 3 * BatchSpacer()) / (kG - 1);
-				const kH_min = Math.ceil(Math.max((kW - 1) * 0.25, (kG - 1) * 0.3125, 1));
-				const kH_max = Math.floor(Math.min(1 + kW * 0.25, 1 + kG * 0.3125));
-				for (let kH = kH_max; kH >= kH_min; --kH) {
-					const t_min_H = (this.times[H] + 5 * BatchSpacer()) / kH;
-					const t_max_H = (this.times[H] - 1 * BatchSpacer()) / (kH - 1);
-					const t_min = Math.max(t_min_H, t_min_G, t_min_W);
-					const t_max = Math.min(t_max_H, t_max_G, t_max_W);
-					if (t_min <= t_max) {
-						this.period = Math.round(t_min);
-						this.depth = Math.floor(kW);
-						break schedule;
-					}
-				}
-			}
-		}
+	// 	const kW_max = Math.floor(1 + (this.times[W1] - 4 * BatchSpacer()) / (8 * BatchSpacer()));
+	// 	schedule: for (let kW = kW_max; kW >= 1; --kW) {
+	// 		const t_min_W = (this.times[W1] + 4 * BatchSpacer()) / kW;
+	// 		const t_max_W = (this.times[W1] - 4 * BatchSpacer()) / (kW - 1);
+	// 		const kG_min = Math.ceil(Math.max((kW - 1) * 0.8, 1));
+	// 		const kG_max = Math.floor(1 + kW * 0.8);
+	// 		for (let kG = kG_max; kG >= kG_min; --kG) {
+	// 			const t_min_G = (this.times[G] + 3 * BatchSpacer()) / kG
+	// 			const t_max_G = (this.times[G] - 3 * BatchSpacer()) / (kG - 1);
+	// 			const kH_min = Math.ceil(Math.max((kW - 1) * 0.25, (kG - 1) * 0.3125, 1));
+	// 			const kH_max = Math.floor(Math.min(1 + kW * 0.25, 1 + kG * 0.3125));
+	// 			for (let kH = kH_max; kH >= kH_min; --kH) {
+	// 				const t_min_H = (this.times[H] + 5 * BatchSpacer()) / kH;
+	// 				const t_max_H = (this.times[H] - 1 * BatchSpacer()) / (kH - 1);
+	// 				const t_min = Math.max(t_min_H, t_min_G, t_min_W);
+	// 				const t_max = Math.min(t_max_H, t_max_G, t_max_W);
+	// 				if (t_min <= t_max) {
+	// 					this.period = Math.round(t_min);
+	// 					this.depth = Math.floor(kW);
+	// 					break schedule;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
 
-		this.fishDelays = [];
-		this.fishDelays[H] = Math.round(this.depth * this.period - 4 * BatchSpacer() - this.times[H]);
-		this.fishDelays[W1] = Math.round(this.depth * this.period - 3 * BatchSpacer() - this.times[W1]);
-		this.fishDelays[G] = Math.round(this.depth * this.period - 2 * BatchSpacer() - this.times[G]);
-		this.fishDelays[W2] = Math.round(this.depth * this.period - 1 * BatchSpacer() - this.times[W2]);
-	}
+	// 	this.fishDelays = [];
+	// 	this.fishDelays[H] = Math.round(this.depth * this.period - 4 * BatchSpacer() - this.times[H]);
+	// 	this.fishDelays[W1] = Math.round(this.depth * this.period - 3 * BatchSpacer() - this.times[W1]);
+	// 	this.fishDelays[G] = Math.round(this.depth * this.period - 2 * BatchSpacer() - this.times[G]);
+	// 	this.fishDelays[W2] = Math.round(this.depth * this.period - 1 * BatchSpacer() - this.times[W2]);
+	// }
 }
 
-export function calculateGrowThreads(ns, server, playerObject, cores, startMoney) {
+export function calculateGrowThreads(ns, serverObject, playerObject, cores, startMoney) {
 	let threads = 1;
 	let newMoney = 0;
-
-	let serverObject = ns.getServer(server);
-	serverObject.hackDifficulty = serverObject.minDifficulty;
-	serverObject.moneyAvailable = startMoney;
 
 	while (true) {
 		let serverGrowth = ns.formulas.hacking.growPercent(serverObject, threads, playerObject, cores);
@@ -581,10 +627,10 @@ export function calculateGrowThreads(ns, server, playerObject, cores, startMoney
 	return threads;
 }
 
-function SetCharAt(str, index, chr) {
-	if (index > str.length - 1) return str;
-	return str.substring(0, index) + chr + str.substring(index + 1);
-}
+// function SetCharAt(str, index, chr) {
+// 	if (index > str.length - 1) return str;
+// 	return str.substring(0, index) + chr + str.substring(index + 1);
+// }
 
 
 
@@ -620,7 +666,7 @@ export function calculateGrowThreadsLambert(ns, host, gain, cores = 1, opts = {}
 function growPercent(ns, host, threads = 1, cores = 1, opts = {}) {
 	const { ServerGrowthRate = 1, hackDifficulty = ns.getServerSecurityLevel(host), } = opts;
 	const growth = ns.getServerGrowth(host) / 100;
-	const multiplier = ns.getPlayer().hacking_grow_mult;
+	const multiplier = ns.getPlayer().mults["hacking_grow"];
 	const base = Math.min(1 + 0.03 / hackDifficulty, 1.0035);
 	const power = growth * ServerGrowthRate * multiplier * ((cores + 15) / 16);
 	return base ** (power * threads);

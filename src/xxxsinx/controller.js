@@ -1,7 +1,7 @@
-import { Metrics } from 'metrics.js'
-import { GetAllServers } from 'utils.js'
-import { IsPrepped, BatchSpacer, FormatMoney } from 'prep.js'
-import { MemoryMap } from 'ram.js'
+import { Metrics } from "xxxsinx/metrics.js"
+import { GetAllServers } from "xxxsinx/utils.js"
+import { IsPrepped, BatchSpacer, FormatMoney } from "xxxsinx/prep.js"
+import { MemoryMap } from "xxxsinx/ram.js"
 
 const QmConfig = new Object({
 	MaxPreppingServers: 2,		// how many servers can be in prep simultaneously
