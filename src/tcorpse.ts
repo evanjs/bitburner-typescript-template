@@ -47,13 +47,16 @@ export function hireRoles(ns: NS, role: string, roleTarget: number, division: Di
     const amount = roleTarget - employeeJobs;
     if (amount > 0) {
         ns.tprint(`Assigning ${amount} employee(s) to ${role} role for ${division.name}'s office in ${city}`);
-
-        ns.corporation.setAutoJobAssignment(division.name, city, role, amount);
-        if (employeeJobs < roleTarget) {
-            hireRoles(ns, role, roleTarget, division, city, employeeJobs);
+        
+        for (let i = 0; i < amount; i++) {
+            const employee = ns.corporation.hireEmployee(division.name, city);
+            if (employee) {
+                ns.corporation.assignJob(division.name, city, employee.name, role);
+            }
         }
-    } else {
-        ns.tprint(`Amount: ${amount}; role: ${role}; employeeJobs: ${employeeJobs}`)
+    }
+    else {
+        ns.tprint(`Amount: ${amount}; role: ${role}; employeeJobs: ${employeeJobs}`);
     }
 }
 

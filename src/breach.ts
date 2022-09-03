@@ -5,6 +5,9 @@ export async function main(ns: NS): Promise<void> {
     const serverName = ns.args[0] as string;
     const server = await ns.getServer(serverName)
     await breach(ns, server)
+    await backdoor(ns, server).then(() => {
+        ns.singularity.connect('home');
+    })
 }
 
 /**
@@ -17,14 +20,8 @@ export async function breach(ns: NS, target: Server): Promise<void> {
     const server = ns.getServer(hostname);
     if (target.openPortCount >= ns.getServerNumPortsRequired(target.hostname)) {
         if (target.hasAdminRights) {
-            ns.tprint(`${hostname} has already been breached. Checking backdoor...`);
+            ns.tprint(`${hostname} has already been breached.`);
             
-            if (!server.backdoorInstalled) {
-                ns.tprint(`Installing backdoor on ${server.hostname} ...`)
-                await backdoor(ns, server);
-            } else {
-                ns.tprint(`Backdoor has already been installed on ${server.hostname}. Exiting`)
-            }
         } else {
             ns.tprint(`Attempting to breach ${hostname} ...`);
             ns.nuke(hostname);
@@ -57,7 +54,6 @@ export async function breach(ns: NS, target: Server): Promise<void> {
         }
     }
     ns.nuke(hostname);
-    await backdoor(ns, server)
 }
 
 export async function backdoor(ns: NS, server: Server) {
@@ -77,8 +73,6 @@ export async function backdoor(ns: NS, server: Server) {
         ns.tprint(`Backdoor installed on server ${server.hostname}`);
     }).catch(e => {
         ns.tprint(`Failed to install backdoor on server ${server.hostname}: ${e}`);
-    }).finally(() => {
-        ns.singularity.connect('home');
     })
 }
 

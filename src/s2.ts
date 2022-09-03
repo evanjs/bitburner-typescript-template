@@ -83,15 +83,6 @@ export async function main(ns: NS): Promise<void> {
 
     while (!reachedMax()) {
         await buyServer(getOptimalNewServerPower());
-        // ns.toast('Refreshing running hacks...');
-        const result = ns.run('auto-startup-hacks.js');
-        // ns.run('auto-startup-hacks.js', 1, 'joesguns');
-        if (result > 0) {
-            // ns.toast("Successfully refreshed running hacks.");
-        }
-        else {
-            // ns.toast("Failed to refresh running hacks.");
-        }
     }
 
     yay()
