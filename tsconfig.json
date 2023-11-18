@@ -21,6 +21,9 @@
       "/*": ["*"],
       "@ns": ["../NetscriptDefinitions.d.ts"],
       "@react": ["lib/react.ts"]
-    }
+    },
+    "lib": [
+      "ES2022"
+    ]
   }
 }

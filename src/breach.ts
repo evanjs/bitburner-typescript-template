@@ -1,5 +1,5 @@
 import { NS, Server } from "@ns";
-import { findServer } from '/findServer';
+import { findServer } from 'findServer';
 
 export async function main(ns: NS): Promise<void> {
     const serverName = ns.args[0] as string;

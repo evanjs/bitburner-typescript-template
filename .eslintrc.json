@@ -21,7 +21,9 @@
         "node_modules/**",
         "build/**",
         "dist/**",
-        "NetscriptDefinitions.d.ts"
+        "NetscriptDefinitions.d.ts",
+        "webpack.config.js",
+        "gulpfile.js"
     ],
     "rules": {
     }

@@ -1,6 +1,6 @@
-import { BatchSpacer, RunScript, WaitPids, Prep, IsPrepped, ServerReport } from "xxxsinx/prep.js";
-import { Metrics, GetBestPctForServer, HGW_MODE } from "xxxsinx/metrics.js";
-import { MemoryMap } from "xxxsinx/ram.js";
+import { BatchSpacer, RunScript, WaitPids, Prep, IsPrepped, ServerReport } from "prep.js";
+import { Metrics, GetBestPctForServer, HGW_MODE } from "metrics.js";
+import { MemoryMap } from "ram.js";
 
 const H = 0;
 const W1 = 1;

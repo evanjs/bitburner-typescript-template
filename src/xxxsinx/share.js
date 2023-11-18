@@ -1,6 +1,6 @@
-import { RunScript } from "xxxsinx/prep.js";
-import { MemoryMap } from "xxxsinx/ram.js";
-import { GetAllServers } from "xxxsinx/utils.js";
+import { RunScript } from "prep.js";
+import { MemoryMap } from "ram.js";
+import { GetAllServers } from "utils.js";
 
 /** @param {NS} ns **/
 export async function main(ns) {

@@ -1,4 +1,4 @@
-import { PrintTable, DefaultStyle, ColorPrint } from "xxxsinx/tables.js"
+import { PrintTable, DefaultStyle, ColorPrint } from 'tables.js'
 
 const FactionNames = {
 	CyberSec: "CyberSec",

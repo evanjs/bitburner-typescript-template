@@ -1,9 +1,9 @@
 //this.hackDifficulty -= amt * BitNodeMultipliers.ServerWeakenRate;
 
-import { BatchSpacer, FormatMoney } from "xxxsinx/prep.js";
-import { MemoryMap } from "xxxsinx/ram.js";
-import { GetAllServers } from "xxxsinx/utils.js";
-import { PrintTable, DefaultStyle, ColorPrint } from "xxxsinx/tables.js"
+import { BatchSpacer, FormatMoney } from "prep.js";
+import { MemoryMap } from "ram.js";
+import { GetAllServers } from "utils.js";
+import { PrintTable, DefaultStyle, ColorPrint } from 'tables.js'
 
 const H = 0;	// Index of HACK data
 const W1 = 1;	// Index of first WEAKEN data

@@ -1,4 +1,4 @@
-import { GetAllServers } from "xxxsinx/utils.js";
+import { GetAllServers } from 'utils.js';
 
 /** @param {NS} ns */
 export async function main(ns) {

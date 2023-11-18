@@ -1,4 +1,4 @@
-//import { MemoryMap } from "xxxsinx/ram.js";
+//import { MemoryMap } from "ram.js";
 
 export async function main(ns) {
 	ns.disableLog('ALL');

@@ -1,4 +1,4 @@
-import { ColorPrint } from "xxxsinx/hack-once.js";
+import { ColorPrint } from 'hack-once.js';
 
 const ALLOWED_SKILL_UPGRATES = [
 	"Hyperdrive", 			// Each level of this skill increases the experience earned from Contracts, Operations, and BlackOps by 10%

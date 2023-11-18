@@ -1,4 +1,4 @@
-import { WaitPids } from "xxxsinx/prep.js";
+import { WaitPids } from "prep.js";
 
 /*
 Brainstorm of what's needed for a "main brain" script
