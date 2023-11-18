@@ -1,8 +1,8 @@
 import { NS } from "@ns"
+import {money} from "format";
 
 /** @param {NS} ns */
-export async function main(ns: NS): Promise<void> {    
-
+export async function main(ns: NS): Promise<void> {
     const S3B4 = 'S3B4-H74513'
     ns.tprint(`Hello I am Server Bot ${S3B4} I will buy you all the best Servers a Pigeon may need`)
 
@@ -41,8 +41,8 @@ export async function main(ns: NS): Promise<void> {
     function boughtServer(name: string, ram: number) {
         if(name === '') return
         metaData[Math.log2(ram)-1].names.push(name)
-        const formatedRam = ns.nFormat(ram*1e9, '0b').toString().padEnd(10)
-        const formatedMoney = ns.nFormat(ns.getPurchasedServerCost(ram), '$0.0a').toString().padEnd(10)
+        const formatedRam = ns.formatRam(ram*1e9, 0).toString().padEnd(10)
+        const formatedMoney = money(ns.getPurchasedServerCost(ram)).toString().padEnd(10)
         // ns.toast(`${S3B4}: Bought bestest server ${name.padEnd(10)} ${formatedRam} for ${formatedMoney} all the ram a chicken needs!`, 'info', 5000)
     }
 
@@ -50,7 +50,7 @@ export async function main(ns: NS): Promise<void> {
         ns.tprint(`Awaiting to buy server ${serverPower}`)
         const ram = Math.min(2**serverPower, 2**maxServerPower)
         const cost = ns.getPurchasedServerCost(ram)
-        ns.tprint(`cost ${ns.nFormat(cost, '$0.0a')}`)
+        ns.tprint(`cost ${money(cost)}`)
         while(await ns.asleep(40)) {
             if(ns.getServerMoneyAvailable('home') <= cost) continue
             if(ns.getPurchasedServers().length === serverLimit) deleteSmallest()

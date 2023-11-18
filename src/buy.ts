@@ -4,7 +4,7 @@ import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
 	const player = ns.getPlayer();
 	if (player.money > 200_000) {
-		if (!player.tor) {
+		if (!ns.hasTorRouter()) {
 			ns.tprint("No tor router found. purchasing ...");
 			if (ns.singularity.purchaseTor()) {
 				ns.tprint("Tor router purchased successfully");

@@ -18,10 +18,10 @@ export async function main(ns: NS): Promise<void> {
 export async function breach(ns: NS, target: Server): Promise<void> {
     const hostname = target.hostname;
     const server = ns.getServer(hostname);
-    if (target.openPortCount >= ns.getServerNumPortsRequired(target.hostname)) {
+    if ((target.openPortCount ?? 0) >= ns.getServerNumPortsRequired(target.hostname)) {
         if (target.hasAdminRights) {
             ns.tprint(`${hostname} has already been breached.`);
-            
+
         } else {
             ns.tprint(`Attempting to breach ${hostname} ...`);
             ns.nuke(hostname);

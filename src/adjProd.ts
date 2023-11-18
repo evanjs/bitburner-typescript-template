@@ -1,6 +1,5 @@
 import { NS } from "@ns";
 
-// const cities = [ 'Aevum', 'Neo Tokyo', 'Volhaven', 'Ishima', 'Chongqing' ]
 let division = null;
 let products = [];
 
@@ -31,23 +30,22 @@ function adjustProductPrice(ns: NS, price: string | number, type: string, step: 
 export async function main(ns: NS): Promise<void> {
 	division = ns.corporation.getDivision('Brand X');
 	products = division.products;
-	const city = 'Aevum';
+	const city = ns.enums.CityName.Aevum
 
 	for (const productName of products) {
-		const product = ns.corporation.getProduct(division.name, productName);
+		const product = ns.corporation.getProduct(division.name, city, productName);
 		if (product.developmentProgress < 100) {
 			continue;
 		}
 
-		const cityData = product.cityData[city];
-		const productPrice = product.sCost;
+		const productPrice = product.desiredSellPrice;
 		let newPrice;
 		let step = 1;
-		if (cityData[1] > cityData[2]) {
+		if (product.productionAmount > product.actualSellAmount) {
 			ns.tprint(`Production for ${productName} in ${city} (${division.type}) exceeds sales. Decrementing price by ${step}...`);
 			newPrice = adjustProductPrice(ns, productPrice, '-', step);
 		}
-		if (cityData[1] == cityData[2]) {
+		if (product.productionAmount == product.actualSellAmount) {
 			step = 10;
 			ns.tprint(`Sales for ${productName} in ${city} (${division.type}) match production. Incrementing price by ${step}...`);
 			newPrice = adjustProductPrice(ns, productPrice, '+', step);

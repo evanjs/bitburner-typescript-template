@@ -150,7 +150,7 @@ async function hackServers(ns: NS, servers: Server[]) {
     // ns.tprint('------------------------------------')
     // ns.tprint(`---------BEGIN ${server.hostname}---------`)
     const requiredPorts = ns.getServerNumPortsRequired(server.hostname);
-    if (availablePortHacks >= server.numOpenPortsRequired) {
+    if (availablePortHacks >= (server.numOpenPortsRequired ?? 999)) {
       if (!server.hasAdminRights) {
         ns.tprint(
           `Player does not have admin access to ${server.hostname}. Attempting to breach...`
@@ -212,7 +212,7 @@ async function hackServers(ns: NS, servers: Server[]) {
  */
 async function breach(ns: NS, target: Server) {
   const hostname = target.hostname;
-  if (target.openPortCount >= ns.getServerNumPortsRequired(target.hostname)) {
+  if ((target.openPortCount ?? 0) >= ns.getServerNumPortsRequired(target.hostname)) {
     if (target.hasAdminRights) {
       ns.tprint(`${hostname} has already been breached. Skipping ...`);
     } else {

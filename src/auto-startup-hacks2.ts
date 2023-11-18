@@ -131,7 +131,7 @@ async function hackMyServers(ns: NS, servers: Array<string>): Promise<void> {
 async function hackServers(ns: NS, servers: Server[]): Promise<void> {
     for (const server of servers) {
         const requiredPorts = ns.getServerNumPortsRequired(server.hostname);
-        if (availablePortHacks >= server.numOpenPortsRequired) {
+        if (availablePortHacks >= (server.numOpenPortsRequired ?? 999)) {
             if (!server.hasAdminRights) {
                 ns.tprint(`Player does not have admin access to ${server.hostname}. Attempting to breach...`);
                 await breach(ns, server);

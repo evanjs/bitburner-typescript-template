@@ -1,6 +1,9 @@
-import { Division, Material, NS, Office } from '@ns';
+import {CityName, Division, Material, NS, Office} from '@ns';
 
-const cities = ['Sector-12', 'Aevum', 'New Tokyo', 'Volhaven', 'Ishima', 'Chongqing']
+function cities(ns: NS) {
+    return Object.values(ns.enums.CityName);
+}
+
 const employeeUpgrades = [
     'FocusWires',
     'Nuoptimal Nootropic Injector Implants',
@@ -35,41 +38,14 @@ function getUpgrades(ns: NS, upgrades: string[], upgradeTarget: number) {
 
 /**
  * @param {NS} ns
- * @param {number} employeeJobs
- * @param {string} role
- * @param {number} roleTarget
- * @param {string} city
- * @param {Division} division
- * @param {number} employeeJobs
- */
-export function hireRoles(ns: NS, role: string, roleTarget: number, division: Division, city: string, employeeJobs: number) {
-    // ns.tprint(`${division}'s ${city} office has less than the desired ${roleTarget} employees in the ${role} position`);
-    const amount = roleTarget - employeeJobs;
-    if (amount > 0) {
-        ns.tprint(`Assigning ${amount} employee(s) to ${role} role for ${division.name}'s office in ${city}`);
-        
-        for (let i = 0; i < amount; i++) {
-            const employee = ns.corporation.hireEmployee(division.name, city);
-            if (employee) {
-                ns.corporation.assignJob(division.name, city, employee.name, role);
-            }
-        }
-    }
-    else {
-        ns.tprint(`Amount: ${amount}; role: ${role}; employeeJobs: ${employeeJobs}`);
-    }
-}
-
-/**
- * @param {NS} ns
  * @param {Office} office
  * * @param {Division} division
  * * @param {String} city
  */
-export function hireRemainingEmployees(ns: NS, office: Office, division: Division, city: string) {
-    if (office.employees.length < office.size) {
-        const remainingEmployees = office.size - office.employees.length;
-        ns.tprint(`We have ${office.employees.length} employees and need ${remainingEmployees} more`);
+export function hireRemainingEmployees(ns: NS, office: Office, division: Division, city: CityName) {
+    if (office.numEmployees < office.size) {
+        const remainingEmployees = office.size - office.numEmployees;
+        ns.tprint(`We have ${office.numEmployees} employees and need ${remainingEmployees} more`);
         for (let i = 0; i < remainingEmployees; i++) {
             ns.corporation.hireEmployee(division.name, city);
         }
@@ -83,7 +59,7 @@ export function hireRemainingEmployees(ns: NS, office: Office, division: Divisio
  */
 async function upgradeWarehouses(ns: NS, target: number, division: Division) {
     // Upgrade each warehouse to <target> units
-    for (const city of cities) {
+    for (const city of cities(ns)) {
         let warehouse = ns.corporation.getWarehouse(division.name, city);
         if (warehouse.size < target) {
             while (warehouse.size < target) {
@@ -110,15 +86,15 @@ async function upgradeWarehouses(ns: NS, target: number, division: Division) {
  * @param {Division} division
  * @param {String} city
  */
-export async function buySomeThings(ns: NS, material: Material, materialTarget: number, division: Division, city: string) {
-    if (material.qty < materialTarget) {
-        const materialToBuy = (materialTarget - material.qty) / 10;
+export async function buySomeThings(ns: NS, material: Material, materialTarget: number, division: Division, city: CityName) {
+    if (material.stored < materialTarget) {
+        const materialToBuy = (materialTarget - material.stored) / 10;
         ns.corporation.buyMaterial(division.name, city, material.name, materialToBuy);
         ns.tprint(`Setting purchase order for ${material.name} in ${city} to ${materialToBuy} to get ${materialTarget} in one tick`);
     } else {
         return;
     }
-    while (ns.corporation.getMaterial(division.name, city, material.name).qty < materialTarget) {
+    while (ns.corporation.getMaterial(division.name, city, material.name).stored < materialTarget) {
         ns.tprint(`${material.name} for ${division.name} in ${city} has not yet reached ${materialTarget}. Waiting ...`);
         await ns.sleep(1000);
     }
@@ -141,7 +117,7 @@ export async function main(ns: NS): Promise<void> {
     // * Business (1)
     // * Management (2)
     // * Research & Development (2)
-    for (const city of cities) {
+    for (const city of cities(ns)) {
         const office = ns.corporation.getOffice(division.name, city);
         const requiredSize = 9;
         const amount = requiredSize - office.size;
@@ -152,25 +128,15 @@ export async function main(ns: NS): Promise<void> {
             ns.corporation.upgradeOfficeSize(division.name, city, amount);
         }
 
-        if (office.employees.length < office.size) {
+        if (office.numEmployees < office.size) {
             hireRemainingEmployees(ns, office, division, city);
         }
 
-        if (office.employeeJobs.Operations < 2) {
-            hireRoles(ns, 'Operations', 2, division, city, office.employeeJobs.Operations);
-        }
-        if (office.employeeJobs.Engineer < 2) {
-            hireRoles(ns, 'Engineer', 2, division, city, office.employeeJobs.Engineer);
-        }
-        if (office.employeeJobs.Business < 1) {
-            hireRoles(ns, 'Business', 1, division, city, office.employeeJobs.Business);
-        }
-        if (office.employeeJobs.Management < 2) {
-            hireRoles(ns, 'Management', 2, division, city, office.employeeJobs.Management);
-        }
-        if (office.employeeJobs["Research & Development"] < 2) {
-            hireRoles(ns, 'Research & Development', 2, division, city, office.employeeJobs["Research & Development"]);
-        }
+        ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', 2);
+        ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', 2);
+        ns.corporation.setAutoJobAssignment(division.name, city, 'Business', 2);
+        ns.corporation.setAutoJobAssignment(division.name, city, 'Management', 2);
+        ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', 2);
     }
 
     // Upgrade Smart Factory and Smart Storage to 10
@@ -188,7 +154,7 @@ export async function main(ns: NS): Promise<void> {
     const aiCoresTarget = 2_520;
     // Real Estate: 11,940/s for 1 tick: 27,000 + 119,400 = 146,400
     const realEstateTarget = 146_400;
-    for (const city of cities) {
+    for (const city of cities(ns)) {
         const hardware = ns.corporation.getMaterial(division.name, city, 'Hardware');
         const robots = ns.corporation.getMaterial(division.name, city, 'Robots');
         const aiCores = ns.corporation.getMaterial(division.name, city, 'AI Cores');

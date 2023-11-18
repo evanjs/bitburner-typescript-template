@@ -1,6 +1,10 @@
-import { Division, Material, NS } from "@ns";
+import {CityName, Division, Material, NS} from "@ns";
 
-const cities = ['Sector-12', 'Aevum', 'New Tokyo', 'Volhaven', 'Ishima', 'Chongqing'];
+function cities(ns: NS) {
+	return Object.values(ns.enums.CityName);
+}
+
+// const cities = Object.values(ns.enums.CityName)
 const employeeUpgrades = [
 	'FocusWires',
 	'Nuoptimal Nootropic Injector Implants',
@@ -15,13 +19,13 @@ const employeeUpgrades = [
  * @param {Division} division
  * @param {String} city
  */
-async function buySomeThings(ns: NS, material: Material, materialTarget: number, division: Division, city: string) {
-	if (material.qty < materialTarget) {
-		const materialToBuy = (materialTarget - material.qty) / 10;
+async function buySomeThings(ns: NS, material: Material, materialTarget: number, division: Division, city: CityName) {
+	if (material.stored < materialTarget) {
+		const materialToBuy = (materialTarget - material.stored) / 10;
 		ns.corporation.buyMaterial(division.name, city, material.name, materialToBuy);
 		ns.tprint(`Setting purchase order for ${material.name} in ${city} to ${materialToBuy} to get ${materialTarget} in one tick`);
 	}
-	while (ns.corporation.getMaterial(division.name, city, material.name).qty < materialTarget) {
+	while (ns.corporation.getMaterial(division.name, city, material.name).stored < materialTarget) {
 		ns.tprint(`${material.name} for ${division.name} in ${city} has not yet reached ${materialTarget}. Waiting ...`);
 		await ns.sleep(1000);
 	}
@@ -48,7 +52,7 @@ export async function main(ns: NS) {
 	// Expand Agriculture into all cities
 	if (agriculture.cities.length < 6) {
 		ns.tprint(`Expanding ${agriculture.name} to all cities...`);
-		for (const city of cities) {
+		for (const city of cities(ns)) {
 			ns.tprint(`Trying to get office for ${agriculture.name} in ${city}`);
 			const hasCity = ns.corporation.getDivision('The Farm').cities.includes(city);
 			ns.tprint(`Checking if ${city} exists in ${cities}: ${hasCity}`);
@@ -65,15 +69,15 @@ export async function main(ns: NS) {
 		ns.tprint(`${agriculture.name} already has offices in all cities`);
 	}
 	// Buy warehouse for each city
-	for (const city of cities) {
+	for (const city of cities(ns)) {
 		if (!ns.corporation.hasWarehouse('The Farm', city)) {
 			ns.corporation.purchaseWarehouse('The Farm', city);
 			ns.tprint(`Purchased a warehouse for ${agriculture.name} in ${city}`);
 		}
 	}
 	// Buy Smart Supply
-	if (!ns.corporation.hasUnlockUpgrade('Smart Supply')) {
-		ns.corporation.unlockUpgrade('Smart Supply');
+	if (!ns.corporation.hasUnlock('Smart Supply')) {
+		ns.corporation.purchaseUnlock('Smart Supply');
 		ns.tprint("Purchased Smart Supply");
 	}
 	// Enable Smart Supply for each warehouse in the Agriculture division
@@ -82,7 +86,7 @@ export async function main(ns: NS) {
 	// * Operations (1)
 	// * Engineer (1)
 	// * Business (1)
-	for (const city of cities) {
+	for (const city of cities(ns)) {
 		const warehouse = ns.corporation.getWarehouse('The Farm', city);
 		if (!warehouse.smartSupplyEnabled) {
 			ns.corporation.setSmartSupply(agriculture.name, city, true);
@@ -93,7 +97,7 @@ export async function main(ns: NS) {
 		}
 		const office = ns.corporation.getOffice('The Farm', city);
 		const employeeTarget = 3;
-		const employeesToHire = employeeTarget - office.employees.length;
+		const employeesToHire = employeeTarget - office.numEmployees;
 		ns.tprint(`Hiring ${employeesToHire} employees for ${agriculture.name}'s office in ${city} to reach ${employeeTarget} employees`);
 		for (let i = 0; i < employeesToHire; i++) {
 			ns.corporation.hireEmployee('The Farm', city);
@@ -122,7 +126,7 @@ export async function main(ns: NS) {
 		ns.tprint(`1 AdVert has already been purchased for ${agriculture.name}. Skipping ...`);
 	}
 	// Upgrade each warehouse to 300 units
-	for (const city of cities) {
+	for (const city of cities(ns)) {
 		while (ns.corporation.getWarehouse(agriculture.name, city).size < 300) {
 			const oldWarehouse = ns.corporation.getWarehouse(agriculture.name, city);
 			ns.corporation.upgradeWarehouse(agriculture.name, city, 1);
@@ -150,31 +154,31 @@ export async function main(ns: NS) {
 	// Buy materials
 	// 125 Hardware
 	// 75 AI Cores
-	for (const city of cities) {
+	for (const city of cities(ns)) {
 		const hardware = ns.corporation.getMaterial('The Farm', city, 'Hardware');
 		const hardwareTarget = 125; // 12.5 * 10 = 125
 		const aiCores = ns.corporation.getMaterial('The Farm', city, 'AI Cores');
 		const aiCoresTarget = 75; // 7.5 * 10 = 75
 		const realEstate = ns.corporation.getMaterial('The Farm', city, 'Real Estate');
 		const realEstateTarget = 27000; // 2,700 * 10 = 27,000
-		// if (hardware.qty < hardwareTarget) {
-		// 	const hardwareToBuy = (hardwareTarget - hardware.qty) / 10;
+		// if (hardware.stored < hardwareTarget) {
+		// 	const hardwareToBuy = (hardwareTarget - hardware.stored) / 10;
 		// 	ns.corporation.buyMaterial('The Farm', city, 'Hardware', hardwareToBuy);
 		// 	ns.tprint(`Setting purchase order for Hardware in ${city} to ${hardwareToBuy} to get ${hardwareTarget} in one tick`)
 		// }
-		// while (ns.corporation.getMaterial('The Farm', city, 'Hardware').qty < hardwareTarget) {
+		// while (ns.corporation.getMaterial('The Farm', city, 'Hardware').stored < hardwareTarget) {
 		// 	ns.tprint(`Hardware for ${agriculture.name} in ${city} has not yet reached ${hardwareTarget}. Waiting ...`)
 		// 	await ns.sleep(1000)
 		// }
 		// ns.tprint(`Reached ${hardwareTarget} hardware units in ${city} for ${agriculture.name}. Clearing buy order`);
 		// ns.corporation.buyMaterial('The Farm', city, 'Hardware', 0);
 		// ns.tprint(`Cleared purchase order for Hardware in ${city} (${agriculture.name})`)
-		// if (aiCores.qty < aiCoresTarget) {
-		// 	const aiCoresToBuy =  (aiCoresTarget - aiCores.qty) / 10;
+		// if (aiCores.stored < aiCoresTarget) {
+		// 	const aiCoresToBuy =  (aiCoresTarget - aiCores.stored) / 10;
 		// 	ns.corporation.buyMaterial('The Farm', city, 'AI Cores', aiCoresToBuy);
 		// 	ns.tprint(`Setting purchase order for AI Cores in ${city} to ${aiCoresToBuy} to get ${aiCoresToBuy} in one tick`)
 		// }
-		// while (ns.corporation.getMaterial('The Farm', city, 'AI Cores').qty < aiCoresTarget) {
+		// while (ns.corporation.getMaterial('The Farm', city, 'AI Cores').stored < aiCoresTarget) {
 		// 	ns.tprint(`AI Cores for ${agriculture.name} in ${city} has not yet reached ${aiCoresTarget*10}. Waiting ...`)
 		// 	await ns.sleep(1000)
 		// }

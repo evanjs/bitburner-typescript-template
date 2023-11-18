@@ -1,7 +1,5 @@
-import {hireRemainingEmployees, hireRoles} from 'tcorpse';
-import { NS } from '@ns';
-
-const cities = ['Sector-12', 'Aevum', 'New Tokyo', 'Volhaven', 'Ishima', 'Chongqing']
+import {hireRemainingEmployees} from 'tcorpse';
+import { NS} from '@ns';
 
 /** @param {NS} ns */
 export async function main(ns: NS) {
@@ -12,7 +10,7 @@ export async function main(ns: NS) {
 	const division = ns.corporation.getDivision('Brand X');
 
 	// Hire x employees in each role
-	for (const city of ['Aevum']) {
+	for (const city of [ ns.enums.CityName.Aevum ]) {
 		const office = ns.corporation.getOffice(division.name, city);
 		const amount = 1;
 		const requiredEmployees = (amount*5);
@@ -20,10 +18,10 @@ export async function main(ns: NS) {
 		// await ns.sleep(1);
 		// Ensure office employs all possible employees
 		hireRemainingEmployees(ns, office, division, city);
-		hireRoles(ns, 'Operations', amount, division, city, office.employeeJobs.Operations);
-		hireRoles(ns, 'Engineer', amount, division, city, office.employeeJobs.Engineer);
-		hireRoles(ns, 'Business', amount, division, city, office.employeeJobs.Business);
-		hireRoles(ns, 'Management', amount, division, city, office.employeeJobs.Management);
-		hireRoles(ns, 'Research & Development', amount, division, city, office.employeeJobs["Research & Development"]);
+		ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', amount);
+		ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', amount);
+		ns.corporation.setAutoJobAssignment(division.name, city, 'Business', amount);
+		ns.corporation.setAutoJobAssignment(division.name, city, 'Management', amount);
+		ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', amount);
 	}
 }
