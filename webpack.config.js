@@ -2,9 +2,10 @@ const path = require('path')
 const TranspilePlugin = require('transpile-webpack-plugin');
 const WebpackWatchedGlobEntries = require('webpack-watched-glob-entries-plugin')
 const CopyPlugin = require("copy-webpack-plugin");
+const ESLintWebpackPlugin = require("eslint-webpack-plugin");
 
 function replaceWithPatternAndLog(content, pattern, replace) {
-    console.log(`Finding pattern ${pattern} and replacing using string: ${replace}`);
+    // console.log(`Finding pattern ${pattern} and replacing using string: ${replace}`);
     return String(content).replace(pattern, replace);
 }
 
@@ -21,14 +22,13 @@ function removeJsFromImport(content) {
 }
 
 function fixImports(content, moduleName) {
-    let modifiedText = prefixImportsWithModuleName(content, 'xxxsinx');
+    let modifiedText = prefixImportsWithModuleName(content, moduleName);
     modifiedText = removeJsFromImport(modifiedText)
     return modifiedText;
 }
 
 module.exports = {
-    mode: 'production',
-    devtool: 'eval',
+    mode: 'development',
     resolve: {
         extensions: [
             '.tsx',
@@ -38,55 +38,66 @@ module.exports = {
         preferRelative: true
     },
     plugins: [
-        new TranspilePlugin({
-            longestCommonDir: './src'
+        new WebpackWatchedGlobEntries(),
+        new ESLintWebpackPlugin({
+            extensions: ['js', 'ts']
         }),
         new CopyPlugin({
             patterns: [
                 {
-                    from: "external/xxxsinx",
+                    from: "./external/xxxsinx",
                     to: "xxxsinx",
                     globOptions: {
                         caseSensitiveMatch: false,
                         ignore: [
                             "**/*.gitignore",
+                            "**/*.git",
                             "**/readme.*"
                         ]
                     },
                     transform: {
                         transformer(content, path) {
-                            return Promise.resolve(fixImports(content));
+                            return Promise.resolve(fixImports('xxxsinx'));
                         }
                     }
                 }
             ],
         }),
-        new WebpackWatchedGlobEntries(),
+
     ],
-    entry: WebpackWatchedGlobEntries.getEntries(
-        [
-            path.resolve(__dirname, 'src/*.ts'),
-        ],
-        {
-            ignore: [
-                '**/*.gitignore'
-            ]
-        }
-    ),
+    entry:
+        WebpackWatchedGlobEntries.getEntries(
+            [
+                path.resolve(__dirname, 'src/*.ts'),
+            ],
+            {
+                ignore: [
+                    '**/*.gitignore'
+                ]
+            }
+        ),
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name]',
+        filename: '[name].js',
+        clean: true
     },
     module: {
         rules: [
             {
-                test: /\.ts$/,
-                use: 'ts-loader',
-                exclude: /node_modules/
+                test: /\.tsx?$/,
+                exclude: [
+                    /node_modules/
+                ],
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: [
+                            '@babel/preset-env'
+                        ]
+                    },
+                },
+                enforce: "pre",
             }
         ]
-    },
-    optimization: {
-        minimize: false
     }
 }
