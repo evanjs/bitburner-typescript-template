@@ -1,2 +1,0 @@
-# bitburner
-My BitBurner scripts

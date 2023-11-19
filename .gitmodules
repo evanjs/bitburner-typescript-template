@@ -1,3 +1,6 @@
 [submodule "src/xxxsinx"]
 	path = src/xxxsinx
 	url = gh:xxxsinx/bitburner
+[submodule "external/xxxsinx"]
+	path = external/xxxsinx
+	url = https://github.com/xxxsinx/bitburner
