@@ -1,23 +1,15 @@
 const path = require('path')
 const TranspilePlugin = require('transpile-webpack-plugin');
+const WebpackWatchedGlobEntries = require('webpack-watched-glob-entries-plugin')
+const ModifyWebpackPlugin = require("modify-webpack-plugin")
+const CopyPlugin = require("copy-webpack-plugin");
+// const webpack = require('webpack');
 
-const glob = require('glob');
-
-function getEntries(pattern) {
-    const entries = {};
-
-    glob.sync(pattern).forEach((file) => {
-        // console.log(`Original name: ${file}`)
-        let replaced = file.replace('src/', '')
-        // console.log(`New name: ${replaced}`)
-        entries[replaced] = path.join(__dirname, file);
-    });
-
-    return entries;
-}
 
 module.exports = {
-    mode: 'development',
+    mode: 'production',
+    // devtool: 'cheap-module-source-map',
+    devtool: 'eval',
     resolve: {
         extensions: [
             '.tsx',
@@ -26,16 +18,54 @@ module.exports = {
         ],
         preferRelative: true
     },
-    entry: getEntries('src/*.ts'),
+    plugins: [
+        new TranspilePlugin({
+            longestCommonDir: './src'
+        }),
+        new ModifyWebpackPlugin({
+            include: [/xxxsinx\/.*\/.*.js$/],
+            exclude: ['node_modules', 'src'],
+            patterns: [
+                {
+                    reg: /(from ['"])(.+?\/.*)(\.js)/g,
+                    newStr: '$1$2'
+                },
+                {
+                    reg: /from '(.+?)'/,
+                    newStr: "from 'xxxsinx/$1'"
+                }
+            ]
+        }),
+        new CopyPlugin({
+            patterns: [
+                {
+                    from: "external/xxxsinx",
+                    to: "xxxsinx"
+                }
+            ],
+        }),
+        new WebpackWatchedGlobEntries(),
+        // new webpack.optimize.UglifyJsPlugin({
+        //     options: {
+        //         compress: {drop_debugger: false}
+        //     }
+        // })
+    ],
+    entry: WebpackWatchedGlobEntries.getEntries(
+        [
+            path.resolve(__dirname, 'src/*.ts'),
+            // path.resolve(__dirname, 'external/xxxsinx/**/*.js')
+        ],
+        {
+            ignore: [
+                '**/*.gitignore'
+            ]
+        }
+    ),
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name]',
     },
-    plugins: [
-        new TranspilePlugin({
-            longestCommonDir: './src'
-        })
-    ],
     module: {
         rules: [
             {
@@ -44,5 +74,8 @@ module.exports = {
                 exclude: /node_modules/
             }
         ]
+    },
+    optimization: {
+        minimize: false
     }
 }
