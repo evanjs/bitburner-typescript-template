@@ -1,14 +1,33 @@
 const path = require('path')
 const TranspilePlugin = require('transpile-webpack-plugin');
 const WebpackWatchedGlobEntries = require('webpack-watched-glob-entries-plugin')
-const ModifyWebpackPlugin = require("modify-webpack-plugin")
 const CopyPlugin = require("copy-webpack-plugin");
-// const webpack = require('webpack');
 
+function replaceWithPatternAndLog(content, pattern, replace) {
+    console.log(`Finding pattern ${pattern} and replacing using string: ${replace}`);
+    return String(content).replace(pattern, replace);
+}
+
+function prefixImportsWithModuleName(content, moduleName) {
+    const pattern = /(from ['"])(.+?\/.*)(\.js)/g;
+    const replace = `$1${moduleName}$2`;
+    return replaceWithPatternAndLog(content, pattern, replace)
+}
+
+function removeJsFromImport(content) {
+    const pattern = /(from.*?)(\.js)/g;
+    const replace = '$1';
+    return replaceWithPatternAndLog(content, pattern, replace);
+}
+
+function fixImports(content, moduleName) {
+    let modifiedText = prefixImportsWithModuleName(content, 'xxxsinx');
+    modifiedText = removeJsFromImport(modifiedText)
+    return modifiedText;
+}
 
 module.exports = {
     mode: 'production',
-    // devtool: 'cheap-module-source-map',
     devtool: 'eval',
     resolve: {
         extensions: [
@@ -22,39 +41,31 @@ module.exports = {
         new TranspilePlugin({
             longestCommonDir: './src'
         }),
-        new ModifyWebpackPlugin({
-            include: [/xxxsinx\/.*\/.*.js$/],
-            exclude: ['node_modules', 'src'],
-            patterns: [
-                {
-                    reg: /(from ['"])(.+?\/.*)(\.js)/g,
-                    newStr: '$1$2'
-                },
-                {
-                    reg: /from '(.+?)'/,
-                    newStr: "from 'xxxsinx/$1'"
-                }
-            ]
-        }),
         new CopyPlugin({
             patterns: [
                 {
                     from: "external/xxxsinx",
-                    to: "xxxsinx"
+                    to: "xxxsinx",
+                    globOptions: {
+                        caseSensitiveMatch: false,
+                        ignore: [
+                            "**/*.gitignore",
+                            "**/readme.*"
+                        ]
+                    },
+                    transform: {
+                        transformer(content, path) {
+                            return Promise.resolve(fixImports(content));
+                        }
+                    }
                 }
             ],
         }),
         new WebpackWatchedGlobEntries(),
-        // new webpack.optimize.UglifyJsPlugin({
-        //     options: {
-        //         compress: {drop_debugger: false}
-        //     }
-        // })
     ],
     entry: WebpackWatchedGlobEntries.getEntries(
         [
             path.resolve(__dirname, 'src/*.ts'),
-            // path.resolve(__dirname, 'external/xxxsinx/**/*.js')
         ],
         {
             ignore: [
