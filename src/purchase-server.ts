@@ -1,6 +1,6 @@
 import { NS } from "@ns";
 import { getThreads } from "threads";
-import { EARLY_HACK_SCRIPT } from "constants";
+import { EARLY_HACK_SCRIPT } from "./constants";
 
 const targetServer = "joesguns";
 

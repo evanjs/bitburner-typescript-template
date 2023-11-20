@@ -4,6 +4,7 @@ function cities(ns: NS) {
 	return Object.values(ns.enums.CityName);
 }
 
+//a
 // const cities = Object.values(ns.enums.CityName)
 const employeeUpgrades = [
 	'FocusWires',
@@ -25,9 +26,11 @@ async function buySomeThings(ns: NS, material: Material, materialTarget: number,
 		ns.corporation.buyMaterial(division.name, city, material.name, materialToBuy);
 		ns.tprint(`Setting purchase order for ${material.name} in ${city} to ${materialToBuy} to get ${materialTarget} in one tick`);
 	}
+
 	while (ns.corporation.getMaterial(division.name, city, material.name).stored < materialTarget) {
 		ns.tprint(`${material.name} for ${division.name} in ${city} has not yet reached ${materialTarget}. Waiting ...`);
 		await ns.sleep(1000);
+
 	}
 	ns.tprint(`Reached ${materialTarget} ${material.name} units in ${city} for ${division.name}. Continuing`);
 	ns.corporation.buyMaterial(division.name, city, material.name, 0);
@@ -75,6 +78,7 @@ export async function main(ns: NS) {
 			ns.tprint(`Purchased a warehouse for ${agriculture.name} in ${city}`);
 		}
 	}
+	//a
 	// Buy Smart Supply
 	if (!ns.corporation.hasUnlock('Smart Supply')) {
 		ns.corporation.purchaseUnlock('Smart Supply');
@@ -86,6 +90,8 @@ export async function main(ns: NS) {
 	// * Operations (1)
 	// * Engineer (1)
 	// * Business (1)
+	//a
+	//b
 	for (const city of cities(ns)) {
 		const warehouse = ns.corporation.getWarehouse('The Farm', city);
 		if (!warehouse.smartSupplyEnabled) {
@@ -99,21 +105,22 @@ export async function main(ns: NS) {
 		const employeeTarget = 3;
 		const employeesToHire = employeeTarget - office.numEmployees;
 		ns.tprint(`Hiring ${employeesToHire} employees for ${agriculture.name}'s office in ${city} to reach ${employeeTarget} employees`);
+
+		ns.tprint('Assigning 1 employee to Operations role');
+		ns.corporation.setAutoJobAssignment('The Farm', city, 'Operations', 1);
+
+		ns.tprint('Assigning 1 employee to Engineer role');
+		ns.corporation.setAutoJobAssignment('The Farm', city, 'Engineer', 1);
+
+		ns.tprint('Assigning 1 employee to Business role');
+		ns.corporation.setAutoJobAssignment('The Farm', city, 'Business', 1);
+
 		for (let i = 0; i < employeesToHire; i++) {
 			ns.corporation.hireEmployee('The Farm', city);
 		}
-		if (office.employeeJobs.Operations < 1) {
-			ns.tprint('Assigning 1 employee to Operations role');
-			ns.corporation.setAutoJobAssignment('The Farm', city, 'Operations', 1);
-		}
-		if (office.employeeJobs.Engineer < 1) {
-			ns.tprint('Assigning 1 employee to Engineer role');
-			ns.corporation.setAutoJobAssignment('The Farm', city, 'Engineer', 1);
-		}
-		if (office.employeeJobs.Business < 1) {
-			ns.tprint('Assigning 1 employee to Business role');
-			ns.corporation.setAutoJobAssignment('The Farm', city, 'Business', 1);
-		}
+
+
+
 		ns.corporation.sellMaterial('The Farm', city, 'Food', 'MAX', 'MP');
 		ns.corporation.sellMaterial('The Farm', city, 'Plants', 'MAX', 'MP');
 	}
@@ -161,27 +168,6 @@ export async function main(ns: NS) {
 		const aiCoresTarget = 75; // 7.5 * 10 = 75
 		const realEstate = ns.corporation.getMaterial('The Farm', city, 'Real Estate');
 		const realEstateTarget = 27000; // 2,700 * 10 = 27,000
-		// if (hardware.stored < hardwareTarget) {
-		// 	const hardwareToBuy = (hardwareTarget - hardware.stored) / 10;
-		// 	ns.corporation.buyMaterial('The Farm', city, 'Hardware', hardwareToBuy);
-		// 	ns.tprint(`Setting purchase order for Hardware in ${city} to ${hardwareToBuy} to get ${hardwareTarget} in one tick`)
-		// }
-		// while (ns.corporation.getMaterial('The Farm', city, 'Hardware').stored < hardwareTarget) {
-		// 	ns.tprint(`Hardware for ${agriculture.name} in ${city} has not yet reached ${hardwareTarget}. Waiting ...`)
-		// 	await ns.sleep(1000)
-		// }
-		// ns.tprint(`Reached ${hardwareTarget} hardware units in ${city} for ${agriculture.name}. Clearing buy order`);
-		// ns.corporation.buyMaterial('The Farm', city, 'Hardware', 0);
-		// ns.tprint(`Cleared purchase order for Hardware in ${city} (${agriculture.name})`)
-		// if (aiCores.stored < aiCoresTarget) {
-		// 	const aiCoresToBuy =  (aiCoresTarget - aiCores.stored) / 10;
-		// 	ns.corporation.buyMaterial('The Farm', city, 'AI Cores', aiCoresToBuy);
-		// 	ns.tprint(`Setting purchase order for AI Cores in ${city} to ${aiCoresToBuy} to get ${aiCoresToBuy} in one tick`)
-		// }
-		// while (ns.corporation.getMaterial('The Farm', city, 'AI Cores').stored < aiCoresTarget) {
-		// 	ns.tprint(`AI Cores for ${agriculture.name} in ${city} has not yet reached ${aiCoresTarget*10}. Waiting ...`)
-		// 	await ns.sleep(1000)
-		// }
 		await buySomeThings(ns, hardware, hardwareTarget, agriculture, city);
 		await buySomeThings(ns, aiCores, aiCoresTarget, agriculture, city);
 		await buySomeThings(ns, realEstate, realEstateTarget, agriculture, city);

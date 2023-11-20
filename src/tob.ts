@@ -39,14 +39,15 @@ export async function main(ns: NS): Promise<void> {
         ns.tprint(`Opening ${required} spots in Aevum to reach requested value of ${aevumSizeTarget}`);
         ns.corporation.upgradeOfficeSize(division.name, cityName, required);
     }
-    // Ensure office employs all possible employees
-    hireRemainingEmployees(ns, aevum, division, cityName);
-
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Operations', 6);
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Engineer', 6);
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Business', 6);
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Management', 6);
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Research & Development', 6);
+
+    // Ensure office employs all possible employees
+    hireRemainingEmployees(ns, aevum, division, cityName);
+
     // Hire 9 employees:
     // * Operations (2)
     // * Engineer (2)
@@ -74,16 +75,17 @@ export async function main(ns: NS): Promise<void> {
             ns.tprint(`Upgrading office size of ${division.name}'s ${city} office to ${requiredSize} (need ${amount} more)`);
             ns.corporation.upgradeOfficeSize(division.name, city, amount);
         }
-        if (office.numEmployees < office.size) {
-            // Ensure office employs all possible employees
-            hireRemainingEmployees(ns, office, division, city);
-        }
-
         ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Business', 1);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Management', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', 2);
+
+        if (office.numEmployees < office.size) {
+            // Ensure office employs all possible employees
+            hireRemainingEmployees(ns, office, division, city);
+        }
+
     }
     if (division.products.length == 0) {
         const productName = "Cigars";

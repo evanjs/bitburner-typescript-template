@@ -17,11 +17,11 @@ export async function main(ns: NS) {
 		ns.corporation.upgradeOfficeSize(division.name, city, requiredEmployees);
 		// await ns.sleep(1);
 		// Ensure office employs all possible employees
-		hireRemainingEmployees(ns, office, division, city);
 		ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', amount);
 		ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', amount);
 		ns.corporation.setAutoJobAssignment(division.name, city, 'Business', amount);
 		ns.corporation.setAutoJobAssignment(division.name, city, 'Management', amount);
 		ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', amount);
+		hireRemainingEmployees(ns, office, division, city);
 	}
 }

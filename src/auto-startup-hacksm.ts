@@ -14,7 +14,7 @@ let availablePortHacks = 0;
 async function hackServers(ns: NS, servers: Array<Server>): Promise<void> {
     for (const server of servers) {
         const requiredPorts = ns.getServerNumPortsRequired(server.hostname);
-        if (availablePortHacks >= (server.numOpenPortsRequired ?? 999)) {
+        if (availablePortHacks >= requiredPorts) {
             if (!server.hasAdminRights) {
                 ns.tprint(`Player does not have admin access to ${server.hostname}. Attempting to breach...`);
                 await breach(ns, server);
@@ -40,7 +40,8 @@ async function hackServers(ns: NS, servers: Array<Server>): Promise<void> {
      */
     async function breach(ns: NS, target: Server) {
         const hostname = target.hostname;
-        if ((target.openPortCount ?? 0) >= ns.getServerNumPortsRequired(target.hostname)) {
+        const requiredPorts = ns.getServerNumPortsRequired(target.hostname);
+        if ((target.openPortCount ?? 0) >= requiredPorts) {
             if (target.hasAdminRights) {
                 ns.tprint(`${hostname} has already been breached. Skipping ...`);
             } else {

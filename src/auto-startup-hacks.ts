@@ -2,7 +2,7 @@ import { searchServers } from "scan";
 import { getThreads, getHomeThreads } from "threads";
 import { getBestServerToHack } from "servers";
 import { NS, Server } from "@ns";
-import { EARLY_HACK_SCRIPT } from "constants";
+import { EARLY_HACK_SCRIPT } from "./constants";
 
 let targetServer: Server;
 
@@ -90,9 +90,10 @@ export async function main(ns: NS): Promise<void> {
   if (!isHomeHackingTarget) {
     ns.scriptKill(EARLY_HACK_SCRIPT, "home");
     const threads = await getHomeThreads(ns, home);
-    ns.tprint(`Trying to run hack script on home with ${threads} threads`);
-    ns.tprint(`Home has ${threads} available threads`);
-    ns.run(EARLY_HACK_SCRIPT, threads, targetServer.hostname);
+    const floored = Math.floor(threads);
+    ns.tprint(`Trying to run hack script on home with ${floored} threads`);
+    ns.tprint(`Home has ${floored} available threads`);
+    ns.run(EARLY_HACK_SCRIPT, floored, targetServer.hostname);
   }
 
   // ns.tprint(`My servers: ${JSON.stringify(myServers, null, 2)}`)
@@ -102,6 +103,11 @@ export async function main(ns: NS): Promise<void> {
   }
 
   await hackServers(ns, allServers);
+}
+
+async function getFlooredThreads(ns: NS, server: string) {
+  const threads = await getThreads(ns, server);
+  return Math.floor(threads);
 }
 
 /**
@@ -117,14 +123,14 @@ async function hackMyServers(ns: NS, servers: string[]) {
     const isHackingTargetServer = await isHackingTarget(ns, server);
     if (!isHackingTargetServer) {
         ns.tprint(`${server} is not currently hacking ${targetServer.hostname}`);
-      let threads = await getThreads(ns, server);
+      let threads = await getFlooredThreads(ns, server);
       if (threads < 1) {
         ns.tprint(
           `${server} does not have enough threads to hack ${targetServer.hostname}. Killing all running programs...`
         );
         ns.scriptKill(EARLY_HACK_SCRIPT, server);
 
-        threads = await getThreads(ns, server);
+        threads = await getFlooredThreads(ns, server);
         ns.tprint(`Threads after killing all programs: ${threads}`);
       }
       ns.tprint(
@@ -165,13 +171,13 @@ async function hackServers(ns: NS, servers: Server[]) {
 
       const isHackingTargetServer = await isHackingTarget(ns, server);
       if (!isHackingTargetServer) {
-        let threads = await getThreads(ns, server.hostname);
+        let threads = await getFlooredThreads(ns, server.hostname);
         if (threads < 1) {
           ns.tprint(
             `${server.hostname} does not have enough threads to hack ${targetServer.hostname}. Killing all running programs...`
           );
           ns.killall(server.hostname, true);
-          threads = await getThreads(ns, server);
+          threads = await getFlooredThreads(ns, server.hostname);
           ns.tprint(`Threads after killing all programs: ${threads}`);
         }
         ns.tprint(

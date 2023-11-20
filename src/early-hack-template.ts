@@ -9,6 +9,7 @@ export async function main(ns: NS): Promise<void> {
     const moneyThresh = ns.getServerMaxMoney(target) * 0.75;
     const securityThresh = ns.getServerMinSecurityLevel(target) + 5;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         if (ns.getServerSecurityLevel(target) > securityThresh) {
             await ns.weaken(target);

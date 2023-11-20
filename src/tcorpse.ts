@@ -128,15 +128,16 @@ export async function main(ns: NS): Promise<void> {
             ns.corporation.upgradeOfficeSize(division.name, city, amount);
         }
 
-        if (office.numEmployees < office.size) {
-            hireRemainingEmployees(ns, office, division, city);
-        }
 
         ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Business', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Management', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', 2);
+
+        if (office.numEmployees < office.size) {
+            hireRemainingEmployees(ns, office, division, city);
+        }
     }
 
     // Upgrade Smart Factory and Smart Storage to 10
