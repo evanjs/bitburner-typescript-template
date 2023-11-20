@@ -1,9 +1,42 @@
-import {NS} from '@ns';
+import {Office, NS, Division} from '@ns';
 import {hireRemainingEmployees} from 'tcorpse';
+import {money} from "/format";
 
 /** @param {NS} ns */
 function cities(ns: NS) {
     return Object.values(ns.enums.CityName);
+}
+
+/** @param {NS} ns
+ * @param {Office} office
+ * @param {Division} division
+ * @param {number} target
+ */
+function tryUpgradeOffice(ns: NS, office: Office, division: Division, target: number) {
+    const required = target - office.size;
+    const city = office.city;
+
+    // ns.tprint(`Opening ${required} spots in ${city} to reach requested value of ${target}`);
+    // ns.corporation.upgradeOfficeSize(division.name, city, required);
+
+    ns.tprint(`Attempting to upgrade office size of ${division.name}'s ${city} office to ${target} (need ${required} more)`);
+    const officeUpgradeSizeCost = ns.corporation.getOfficeSizeUpgradeCost(division.name, city, required)
+    const officeUpgradeSizeCostFormatted = money(officeUpgradeSizeCost);
+
+    const currentFunds = ns.corporation.getCorporation().funds;
+    const currentFundsFormatted = money(currentFunds)
+
+    const diff = officeUpgradeSizeCost - currentFunds;
+    const diffFormatted = money(diff);
+
+    const haveSufficientFunds = officeUpgradeSizeCost > currentFunds;
+    if (haveSufficientFunds) {
+        ns.tprint(`Come back later, you're broke.\nYou need: ${officeUpgradeSizeCostFormatted}\nCurrent Funds: ${currentFundsFormatted}\nYou are ${diffFormatted} short`);
+        return false;
+    } else {
+        ns.corporation.upgradeOfficeSize(division.name, city, required);
+        return true;
+    }
 }
 
 /** @param {NS} ns */
@@ -35,9 +68,14 @@ export async function main(ns: NS): Promise<void> {
     }
     const aevumSizeTarget = 30;
     if (aevum.size < aevumSizeTarget) {
-        const required = aevumSizeTarget - aevum.size;
-        ns.tprint(`Opening ${required} spots in Aevum to reach requested value of ${aevumSizeTarget}`);
-        ns.corporation.upgradeOfficeSize(division.name, cityName, required);
+        const success = tryUpgradeOffice(ns, aevum, division, aevumSizeTarget);
+        if (success) {
+            ns.tprint(`Successfully upgraded Aevum office to ${aevumSizeTarget} employees.`)
+            ns.tprint(`Configuraing job assignment and hiring employees ...`)
+        } else {
+            ns.tprint(`Failed to upgrade Aevum office to ${aevumSizeTarget} employees. Exiting...`)
+            return
+        }
     }
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Operations', 6);
     ns.corporation.setAutoJobAssignment(division.name, cityName, 'Engineer', 6);
@@ -73,8 +111,17 @@ export async function main(ns: NS): Promise<void> {
             ns.tprint(`The ${city} office of ${division.name} already has a capacity of ${office.size} employees.`);
         } else {
             ns.tprint(`Upgrading office size of ${division.name}'s ${city} office to ${requiredSize} (need ${amount} more)`);
-            ns.corporation.upgradeOfficeSize(division.name, city, amount);
+            if (ns.corporation.getOfficeSizeUpgradeCost(division.name, city, amount) > ns.corporation.getCorporation().funds) {
+                ns.tprint(`Come back later, you broke piece of shit`);
+                return
+            } else {
+                ns.corporation.upgradeOfficeSize(division.name, city, amount);
+            }
         }
+
+        ns.tprint("Should only reach this point if we have enough money to upgrade the office size");
+
+
         ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', 2);
         ns.corporation.setAutoJobAssignment(division.name, city, 'Business', 1);
