@@ -1,4 +1,4 @@
-import {Office, NS, Division} from '@ns';
+import {Office, NS, Division, CityName} from '@ns';
 import {hireRemainingEmployees} from 'tcorpse';
 import {money} from "/format";
 
@@ -39,6 +39,27 @@ function tryUpgradeOffice(ns: NS, office: Office, division: Division, target: nu
     }
 }
 
+const tryPurchaseWarehouse = (ns: NS, division: Division, city: CityName): boolean => {
+    const warehouseCost = ns.corporation.getUpgradeWarehouseCost(division.name, city);
+    const warehouseCostFormatted = money(warehouseCost);
+
+    const funds = ns.corporation.getCorporation().funds;
+    const fundsFormatted = money(funds);
+
+    const diff = warehouseCost - funds;
+    const diffFormatted = money(diff);
+
+    const haveSufficientFunds = warehouseCost < funds;
+
+    if (!haveSufficientFunds) {
+        ns.tprint(`Come back later, you're broke.\nYou need: ${warehouseCostFormatted}\nCurrent Funds: ${fundsFormatted}\nYou are ${diffFormatted} short`);
+        return false;
+    } else {
+        ns.corporation.purchaseWarehouse(division.name, city);
+        return true;
+    }
+};
+
 /** @param {NS} ns */
 export async function main(ns: NS): Promise<void> {
     const cityName = ns.enums.CityName.Aevum;
@@ -64,27 +85,34 @@ export async function main(ns: NS): Promise<void> {
     }
     const aevum = ns.corporation.getOffice(division.name, cityName);
     if (!ns.corporation.hasWarehouse(division.name, cityName)) {
-        ns.corporation.purchaseWarehouse(division.name, cityName);
+        const success = tryPurchaseWarehouse(ns, division, cityName);
+        if (success) {
+            ns.tprint(`Successfully purchased warehouse for Aevum.`)
+        }
+
     }
+
+    // Ensure Aevum has 30 employees
+    // Ensure Aevum has a minimum of 6 employees assigned to each role
     const aevumSizeTarget = 30;
     if (aevum.size < aevumSizeTarget) {
         const success = tryUpgradeOffice(ns, aevum, division, aevumSizeTarget);
         if (success) {
             ns.tprint(`Successfully upgraded Aevum office to ${aevumSizeTarget} employees.`)
-            ns.tprint(`Configuraing job assignment and hiring employees ...`)
+            ns.tprint(`Configuring job assignment and hiring employees ...`)
+            ns.corporation.setAutoJobAssignment(division.name, cityName, 'Operations', 6);
+            ns.corporation.setAutoJobAssignment(division.name, cityName, 'Engineer', 6);
+            ns.corporation.setAutoJobAssignment(division.name, cityName, 'Business', 6);
+            ns.corporation.setAutoJobAssignment(division.name, cityName, 'Management', 6);
+            ns.corporation.setAutoJobAssignment(division.name, cityName, 'Research & Development', 6);
+
+            // Ensure office employs all possible employees
+            hireRemainingEmployees(ns, aevum, division, cityName);
         } else {
             ns.tprint(`Failed to upgrade Aevum office to ${aevumSizeTarget} employees. Exiting...`)
-            return
+            // return
         }
     }
-    ns.corporation.setAutoJobAssignment(division.name, cityName, 'Operations', 6);
-    ns.corporation.setAutoJobAssignment(division.name, cityName, 'Engineer', 6);
-    ns.corporation.setAutoJobAssignment(division.name, cityName, 'Business', 6);
-    ns.corporation.setAutoJobAssignment(division.name, cityName, 'Management', 6);
-    ns.corporation.setAutoJobAssignment(division.name, cityName, 'Research & Development', 6);
-
-    // Ensure office employs all possible employees
-    hireRemainingEmployees(ns, aevum, division, cityName);
 
     // Hire 9 employees:
     // * Operations (2)
@@ -94,6 +122,8 @@ export async function main(ns: NS): Promise<void> {
     // * Research & Development (2)
     for (const city of cities(ns).filter(x => x != cityName)) {
         // Expand into city / purchase office
+
+        // If there is no warehouse/presence in a city
         if (!division.cities.includes(city)) {
             ns.tprint(`${division.name} does not have an office in ${city}. Expanding ...`);
             ns.corporation.expandCity(division.name, city);
@@ -102,35 +132,37 @@ export async function main(ns: NS): Promise<void> {
         }
         // Purchase warehouse
         const office = ns.corporation.getOffice(division.name, city);
+
+        // Try to purchase warehouse for city if none exists
         if (!ns.corporation.hasWarehouse(division.name, city)) {
-            ns.corporation.purchaseWarehouse(division.name, city);
-        }
-        const requiredSize = 9;
-        const amount = requiredSize - office.size;
-        if (amount <= 0) {
-            ns.tprint(`The ${city} office of ${division.name} already has a capacity of ${office.size} employees.`);
-        } else {
-            ns.tprint(`Upgrading office size of ${division.name}'s ${city} office to ${requiredSize} (need ${amount} more)`);
-            if (ns.corporation.getOfficeSizeUpgradeCost(division.name, city, amount) > ns.corporation.getCorporation().funds) {
-                ns.tprint(`Come back later, you broke piece of shit`);
-                return
+            const success = tryPurchaseWarehouse(ns, division, city);
+            if (success) {
+                ns.tprint(`Successfully purchased warehouse in ${city}.`)
             } else {
-                ns.corporation.upgradeOfficeSize(division.name, city, amount);
+                ns.tprint(`Not enough money for warehouse in ${city}`)
+                ns.tprint(`Exiting now/not attempting further purchases`)
+                return;
             }
+        } else {
+            ns.tprint(`${division.name} already has an warehouse in ${city}. Skipping ...`);
         }
 
-        ns.tprint("Should only reach this point if we have enough money to upgrade the office size");
 
+        // ensure employee requirements are met
+        const requiredSize = 9;
+        if (office.size < requiredSize) {
+            const success = tryUpgradeOffice(ns, aevum, division, aevumSizeTarget);
+            if (success) {
+                ns.tprint("Should only reach this point if we have enough money to upgrade the office size");
 
-        ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', 2);
-        ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', 2);
-        ns.corporation.setAutoJobAssignment(division.name, city, 'Business', 1);
-        ns.corporation.setAutoJobAssignment(division.name, city, 'Management', 2);
-        ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', 2);
+                ns.corporation.setAutoJobAssignment(division.name, city, 'Operations', 2);
+                ns.corporation.setAutoJobAssignment(division.name, city, 'Engineer', 2);
+                ns.corporation.setAutoJobAssignment(division.name, city, 'Business', 1);
+                ns.corporation.setAutoJobAssignment(division.name, city, 'Management', 2);
+                ns.corporation.setAutoJobAssignment(division.name, city, 'Research & Development', 2);
 
-        if (office.numEmployees < office.size) {
-            // Ensure office employs all possible employees
-            hireRemainingEmployees(ns, office, division, city);
+                hireRemainingEmployees(ns, office, division, city);
+            }
         }
 
     }
